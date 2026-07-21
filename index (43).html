@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Norte | Moderador de Candidaturas</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --card-border: #2c2c2c;
+      --yellow-primary: #ffc800;
+      --text-main: #f0f0f0;
+      --text-muted: #a0a0a0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container { width: 100%; max-width: 700px; }
+
+    .header-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+    }
+
+    .logo-admin {
+      height: 40px;
+      width: auto;
+      vertical-align: middle;
+      margin-right: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      color: var(--yellow-primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+      background: #ff4d4d;
+      color: white;
+    }
+
+    /* Accordion Cards */
+    .card-candidate {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-candidate:hover {
+      border-color: #444;
+    }
+
+    .candidate-header {
+      padding: 18px 20px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .candidate-title {
+      font-weight: 700;
+      font-size: 16px;
+      color: #ffffff;
+    }
+
+    .candidate-tag {
+      background: rgba(255, 200, 0, 0.15);
+      color: var(--yellow-primary);
+      border: 1px solid rgba(255, 200, 0, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .candidate-body {
+      display: none;
+      padding: 20px;
+      background: #161616;
+      border-top: 1px solid var(--card-border);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .field-group {
+      margin-bottom: 10px;
+      display: flex;
+      border-bottom: 1px dashed #282828;
+      padding-bottom: 8px;
+    }
+
+    .field-label {
+      width: 160px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .field-value {
+      color: var(--text-main);
+      flex: 1;
+    }
+
+    .file-badge {
+      display: inline-block;
+      background: #252525;
+      color: var(--yellow-primary);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-muted);
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px dashed var(--card-border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header-panel">
+      <div>
+        <h1>
+          <img src="norte-removebg-preview.png" alt="Norte" class="logo-admin"> 
+          PAINEL DE MODERAÇÃO
+        </h1>
+        <small style="color: var(--text-muted);">Gerenciamento de Candidaturas do Trabalhe Conosco</small>
+      </div>
+      <button class="btn-danger" onclick="limparTudo()">Limpar Lista</button>
+    </div>
+
+    <div id="listaCandidatos"></div>
+  </div>
+
+  <script>
+    function carregarCandidatos() {
+      const container = document.getElementById('listaCandidatos');
+      const candidatos = JSON.parse(localStorage.getItem('candidatosNorte') || '[]');
+
+      if (candidatos.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Nenhuma candidatura recebida ainda</h3>
+            <p>Os formulários preenchidos no site aparecerão aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      candidatos.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card-candidate';
+        card.innerHTML = `
+          <div class="candidate-header" onclick="toggleDetails(${index})">
+            <span class="candidate-title">Formulário de: ${escapeHtml(item.nome)}</span>
+            <span class="candidate-tag">${escapeHtml(item.area)}</span>
+          </div>
+          <div class="candidate-body" id="detalhes-${index}">
+            <div class="field-group">
+              <span class="field-label">Nome Completo:</span>
+              <span class="field-value">${escapeHtml(item.nome)}</span>
+            </div>
+            <div class="field-group">
+              <span class="field-label">Telefone:</span>
+              <span class="field-value">${escapeHtml(item.telefone)}</span>
+            </div>
+            <div class="field-group">
+              <span class="field-label">Idade:</span>
+              <span class="field-value">${escapeHtml(item.idade)} anos</span>
+            </div>
+            <div class="field-group">
+              <span class="field-label">Área Solicitada:</span>
+              <span class="field-value">${escapeHtml(item.area)}</span>
+            </div>
+            <div class="field-group">
+              <span class="field-label">Anexo / Currículo:</span>
+              <span class="field-value"><span class="file-badge">📄 ${escapeHtml(item.arquivo)}</span></span>
+            </div>
+            <div class="field-group" style="border:none;">
+              <span class="field-label">Data de Envio:</span>
+              <span class="field-value" style="color: var(--text-muted);">${item.data}</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleDetails(index) {
+      const el = document.getElementById(`detalhes-${index}`);
+      const isOpen = el.style.display === 'block';
+      el.style.display = isOpen ? 'none' : 'block';
+    }
+
+    function limparTudo() {
+      if (confirm('Tem certeza que deseja apagar todas as candidaturas?')) {
+        localStorage.removeItem('candidatosNorte');
+        carregarCandidatos();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text || '';
+      return div.innerHTML;
+    }
+
+    carregarCandidatos();
+  </script>
+
+</body>
+</html>
